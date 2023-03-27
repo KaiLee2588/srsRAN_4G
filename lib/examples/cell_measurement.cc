@@ -37,12 +37,12 @@
 
 #define ENABLE_AGC_DEFAULT
 
-extern "C" {
+// extern "C" {
 #include "srsran/common/crash_handler.h"
 #include "srsran/phy/rf/rf.h"
 #include "srsran/phy/rf/rf_utils.h"
 #include "srsran/srsran.h"
-}
+//}
 #include "srsran/asn1/rrc/rrc_asn1.h"
 #include "srsran/common/bcd_helpers.h"
 
@@ -160,7 +160,7 @@ int parse_args(prog_args_t* args, int argc, char** argv)
         args->earfcn_end = atoi(argv[optind]);
         break;
       case 'v':
-        srsran_verbose++;
+        increase_srsran_verbose_level();
         break;
       default:
         usage(args, argv[0]);
@@ -302,7 +302,7 @@ int main(int argc, char** argv)
   if (parse_args(&prog_args, argc, argv)) {
     exit(-1);
   }
-  printf("- Scanning %d EARFCNs\n", prog_args.earfcn_vector.size());
+  printf("- Scanning %lu EARFCNs\n", prog_args.earfcn_vector.size());
   srsran_earfcn_t channels[prog_args.earfcn_vector.size()];
 
   printf("Opening RF device...\n");
@@ -380,7 +380,7 @@ int main(int argc, char** argv)
       freq = 0; // continue loop at the beginning
     }
     float rx_freq = channels[freq].fd * MHZ;
-    srsran_rf_set_rx_freq(&rf, (double)rx_freq);
+    srsran_rf_set_rx_freq(&rf, 0, (double)rx_freq);
     srsran_rf_rx_wait_lo_locked(&rf);
     INFO("Set rf_freq to %.3f MHz\n", (double)rx_freq / 1000000);
 
@@ -521,7 +521,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Error initiating FFT\n");
         return -1;
       }
-      if (srsran_chest_dl_init(&chest, cell.nof_prb)) {
+      if (srsran_chest_dl_init(&chest, cell.nof_prb, cell.nof_ports)) {
         fprintf(stderr, "Error initiating channel estimator\n");
         return -1;
       }
@@ -548,7 +548,7 @@ int main(int argc, char** argv)
       while ((sf_cnt < prog_args.nof_subframes || prog_args.nof_subframes == -1) && !go_exit && !exit_decode_loop) {
         uint8_t bch_payload[SRSRAN_BCH_PAYLOAD_LEN];
 
-        ret = srsran_ue_sync_zerocopy_multi(&ue_sync, sf_buffer);
+        ret = srsran_ue_sync_zerocopy(&ue_sync, sf_buffer, 3 * SRSRAN_SF_LEN_MAX);
         if (ret < 0) {
           fprintf(stderr, "Error calling srsran_ue_sync_work()\n");
         }
@@ -626,7 +626,7 @@ int main(int argc, char** argv)
                         //                                      sib1->cell_access_related_info.plmn_id_list[0].plmn_id\n");
                         asn1::rrc::plmn_id_s plmn = sib1->cell_access_related_info.plmn_id_list[0].plmn_id;
 
-                        std::string plmn_string = srsran::plmn_id_to_string(plmn);
+                        std::string plmn_string = srsran::plmn_id.to_string(plmn);
                         // If we were using C++11 we could just use stoi
                         tower.mcc = atoi(plmn_string.substr(0, 3).c_str());
                         tower.mnc = atoi(plmn_string.substr(3, plmn_string.length() - 3).c_str());
@@ -693,7 +693,7 @@ int main(int argc, char** argv)
                        10 * log10(rsrp * 1000) - rx_gain_offset,
                        10 * log10(rsrq),
                        10 * log10(snr));
-                if (srsran_verbose != SRSRAN_VERBOSE_NONE) {
+                if (!(SRSRAN_VERBOSE_ISNONE)) {
                   printf("\n");
                 }
                 tower.rssi = 10 * log10(rssi * 1000) - rx_gain_offset;

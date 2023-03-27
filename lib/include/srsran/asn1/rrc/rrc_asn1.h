@@ -28,11 +28,11 @@
 #ifndef SRSASN1_RRC_H
 #define SRSASN1_RRC_H
 
-#include "rrc_asn1_bcch_msg.h"
-#include "rrc_asn1_dl_ccch_msg.h"
-#include "rrc_asn1_ho_cmd.h"
-#include "rrc_asn1_ul_ccch_msg.h"
-#include "rrc_asn1_ul_dcch_msg.h"
+#include "bcch_msg.h"
+#include "dl_ccch_msg.h"
+#include "ho_cmd.h"
+#include "ul_ccch_msg.h"
+#include "ul_dcch_msg.h"
 
 namespace asn1 {
 namespace rrc {
